@@ -1,0 +1,42 @@
+
+
+--Average time to graduation for BINT program:
+
+SELECT 
+    AVG(TO_DATE(grad_date, 'MM/DD/YYYY') - TO_DATE("programEnd", 'MM/DD/YYYY')) AS average_time_to_graduation
+FROM "Student_information"
+WHERE program_status = 'Graduated';
+
+--Graduation rate for BINT program:
+
+SELECT 
+    COUNT(*) AS total_graduated,
+    COUNT(*) / (SELECT COUNT(*) FROM "Student_information" WHERE program_status = 'Graduated') AS graduation_rate
+FROM "Student_information"
+WHERE program_status = 'Graduated';
+
+--Ranking feeder institutions by admission rates:
+
+SELECT 
+    p.program_code, 
+    COUNT(*) AS total_applications, 
+    COUNT(*) / (SELECT COUNT(*) FROM "Student_information" WHERE program_status = 'Graduated') AS application_rate,
+    COUNT(CASE WHEN program_status = 'Graduated' THEN 1 END) AS total_accepted,
+    COUNT(CASE WHEN program_status = 'Graduated' THEN 1 END) / COUNT(*) AS acceptance_rate
+FROM "Student_information" s
+JOIN "Feeder" f ON s.feeder_id = f.feeder_id
+JOIN "Programs" p ON s.program_id = p.program_id
+WHERE s.program_status = 'Graduated'
+GROUP BY p.program_code
+ORDER BY acceptance_rate DESC;
+
+--Overall acceptance rate for BINT program:
+
+SELECT 
+    COUNT(*) AS total_accepted,
+    CASE WHEN (SELECT COUNT(*) FROM "Student_information" WHERE program_status = 'Graduated') = 0 
+         THEN 0
+         ELSE COUNT(*) / (SELECT COUNT(*) FROM "Student_information" WHERE program_status = 'Graduated') 
+    END AS acceptance_rate
+FROM "Student_information"
+WHERE program_id = 13 AND program_status = 'Graduated';
